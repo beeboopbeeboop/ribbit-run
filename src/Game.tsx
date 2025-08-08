@@ -27,8 +27,6 @@ export default function Game(){
     const loop = ()=>{
       if(!quiz){
         const v = { ...vel }
-        // auto-scroll to the right for side-scroller feel
-        v.x += 0.25 * cfg.speed
         if(keys['ArrowLeft']) v.x -= 0.6 * cfg.speed
         if(keys['ArrowRight']) v.x += 0.6 * cfg.speed
         if((keys[' '] || keys['Spacebar']) && onGround){ v.y = -cfg.jump; useGameStore.setState({ onGround:false }) }
@@ -72,16 +70,16 @@ function Playfield(){
     <div style={{ width: WORLD.width, height: WORLD.height, borderRadius:24, background:'linear-gradient(180deg,#dff9ff,#bfe7ff)', boxShadow:'0 10px 30px rgba(0,0,0,.15)', position:'relative', overflow:'hidden', userSelect:'none' }}>
       {world === 0 ? <OrchardBg/> : <CityBg/>}
       <Fruits/>
-      <div style={{ position:'absolute', left: pos.x, top: pos.y, width:32, height:32 }} title="You are a frog">
-        {frog==='Ribbie' && <RibbieSvg/>}
-        {frog==='Jinnie' && <JinnieSvg/>}
-        {frog==='Rinnie' && <RinnieSvg/>}
-        {frog==='Chinnie' && <ChinnieSvg/>}
+      <div style={{ position:'absolute', left: pos.x, top: pos.y, width:48, height:48 }} title="You are a frog">
+        {frog==='Ribbie' && <RibbieSvg size={48}/>} 
+        {frog==='Jinnie' && <JinnieSvg size={48}/>} 
+        {frog==='Rinnie' && <RinnieSvg size={48}/>} 
+        {frog==='Chinnie' && <ChinnieSvg size={48}/>}
       </div>
       {quiz && <QuizOverlay/>}
       {flash && (
         <div style={{ position:'absolute', top:18, left:0, right:0, display:'grid', placeItems:'center' }}>
-          <div style={{ background:'#0f172a', color:'white', padding:'10px 16px', borderRadius:999, fontWeight:800, letterSpacing:.5, boxShadow:'0 8px 20px rgba(0,0,0,.35)' }}>{flash}</div>
+          <div style={{ background:'#0f172a', color:'white', padding:'14px 22px', borderRadius:999, fontWeight:900, letterSpacing:.6, boxShadow:'0 10px 26px rgba(0,0,0,.35)', fontSize:20 }}>{flash}</div>
         </div>
       )}
     </div>

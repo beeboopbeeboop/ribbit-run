@@ -36,15 +36,15 @@ export function QuizOverlay(){
   if(!quiz) return null
   return (
     <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.45)', display:'grid', placeItems:'center', padding:24 }}>
-      <div style={{ background:'white', borderRadius:16, padding:20, width:520, boxShadow:'0 12px 28px rgba(0,0,0,.25)' }}>
-        <div style={{ fontSize:18, opacity:.7, marginBottom:6 }}>Choose the translation</div>
-        <div style={{ fontSize:28, fontWeight:800, marginBottom:14 }}>{quiz.entry.es} <span style={{ fontSize:16, fontWeight:500, opacity:.6 }}>{quiz.entry.phon}</span></div>
-        <div style={{ display:'grid', gap:10 }}>
+      <div style={{ background:'white', borderRadius:20, padding:24, width:560, boxShadow:'0 16px 40px rgba(0,0,0,.28)', border:'2px solid #0f172a10' }}>
+        <div style={{ fontSize:20, opacity:.7, marginBottom:8 }}>Choose the translation</div>
+        <div style={{ fontSize:32, fontWeight:900, marginBottom:16 }}>{quiz.entry.es} <span style={{ fontSize:16, fontWeight:600, opacity:.6 }}>{quiz.entry.phon}</span></div>
+        <div style={{ display:'grid', gap:12 }}>
           {quiz.choices.map((c, i) => (
             <button
               key={c}
               onClick={()=>answer(c)}
-              style={{ padding:'12px 14px', borderRadius:12, border:'2px solid '+(i===idx?'#0f172a':'#ddd'), fontSize:18, textAlign:'left', cursor:'pointer', background: i===idx?'#eef3ff':'white' }}
+              style={{ padding:'14px 16px', borderRadius:14, border:'2px solid '+(i===idx?'#0f172a':'#ddd'), fontSize:18, textAlign:'left', cursor:'pointer', background: i===idx?'#eef3ff':'white' }}
             >{c}</button>
           ))}
         </div>
