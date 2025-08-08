@@ -1,8 +1,8 @@
 import React from 'react'
 import { WORLD } from '../engine/physics'
 
-export function OrchardBg(){
-  const w = WORLD.width, h = WORLD.height
+export function OrchardBg({ width = WORLD.width }:{ width?:number }){
+  const w = width, h = WORLD.height
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ position:'absolute', inset:0 }}>
       <defs>
@@ -12,7 +12,7 @@ export function OrchardBg(){
         </linearGradient>
       </defs>
       <rect width={w} height={h} fill="url(#sky)" />
-      {Array.from({ length: 7 }).map((_,i)=>{
+      {Array.from({ length: Math.ceil(w/130)+4 }).map((_,i)=>{
         const x = 60 + i*130
         const y = h-140
         return (
@@ -32,8 +32,8 @@ export function OrchardBg(){
   )
 }
 
-export function CityBg(){
-  const w = WORLD.width, h = WORLD.height
+export function CityBg({ width = WORLD.width }:{ width?:number }){
+  const w = width, h = WORLD.height
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} xmlns="http://www.w3.org/2000/svg" style={{ position:'absolute', inset:0 }}>
       <defs>
@@ -43,9 +43,9 @@ export function CityBg(){
         </linearGradient>
       </defs>
       <rect width={w} height={h} fill="url(#sky2)" />
-      {Array.from({ length: 8 }).map((_,i)=>{
-        const x = i * (w/8)
-        const bw = w/8 - 12
+      {Array.from({ length: Math.ceil(w/160)+4 }).map((_,i)=>{
+        const bw = 140
+        const x = i * (bw+12)
         const bh = 120 + (i%3)*40
         return (
           <g key={i} transform={`translate(${x+6} ${h-200})`}>

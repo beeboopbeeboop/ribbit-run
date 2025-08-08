@@ -11,7 +11,7 @@ export function applyPhysics(
 ){
   const v = { ...vel }
   // gravity
-  v.y += 0.7
+  v.y += 0.6
   // friction
   v.x *= cfg.friction
   let nx = pos.x + v.x
