@@ -4,6 +4,8 @@ import { WORLD, applyPhysics } from './engine/physics'
 import { useGameStore, CHAR_PRESETS, collideFruit } from './useGameStore'
 import { HUD } from './ui/HUD'
 import { QuizOverlay } from './ui/Quiz'
+import { OrchardBg, CityBg } from './assets/backgrounds'
+import { RibbieSvg, JinnieSvg, RinnieSvg, ChinnieSvg } from './assets/characters'
 
 export default function Game(){
   const { frog, pos, vel, onGround, keys, setPos, setVel, setOnGround, quiz, flash, setKeys } = useGameStore()
@@ -63,14 +65,16 @@ export default function Game(){
 }
 
 function Playfield(){
-  const { pos, flash, quiz, world } = useGameStore()
+  const { pos, flash, quiz, world, frog } = useGameStore()
   return (
     <div style={{ width: WORLD.width, height: WORLD.height, borderRadius:24, background:'linear-gradient(180deg,#dff9ff,#bfe7ff)', boxShadow:'0 10px 30px rgba(0,0,0,.15)', position:'relative', overflow:'hidden', userSelect:'none' }}>
-      <div style={{ position:'absolute', left:0, width:'100%', bottom:0, height: WORLD.height - WORLD.groundY, background:'#78c46c' }} />
-      <div style={{ position:'absolute', left:0, width:'100%', bottom: WORLD.height - WORLD.groundY, height: 16, background:'#4f8d46' }} />
+      {world === 0 ? <OrchardBg/> : <CityBg/>}
       <Fruits/>
-      <div style={{ position:'absolute', left: pos.x, top: pos.y, width:32, height:32, borderRadius:8, background:'#79e27e', outline:'3px solid #2c7b2c', display:'grid', placeItems:'center', fontSize:18 }} title="You are a frog">
-        🐸
+      <div style={{ position:'absolute', left: pos.x, top: pos.y, width:32, height:32 }} title="You are a frog">
+        {frog==='Ribbie' && <RibbieSvg/>}
+        {frog==='Jinnie' && <JinnieSvg/>}
+        {frog==='Rinnie' && <RinnieSvg/>}
+        {frog==='Chinnie' && <ChinnieSvg/>}
       </div>
       {quiz && <QuizOverlay/>}
       {flash && (
