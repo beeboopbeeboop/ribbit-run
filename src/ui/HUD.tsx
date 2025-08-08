@@ -8,7 +8,7 @@ export function HUD(){
   return (
     <div style={{ display:'grid', gap:10 }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <div style={{ fontWeight:900, fontSize:22 }}>Ribbit Run: Español</div>
+        <div style={{ fontWeight:900, fontSize:22 }}>Ribbit Run</div>
         <div style={{ display:'flex', gap:16, alignItems:'center' }}>
           <button aria-label="Settings" title="Settings" className="btn" onClick={()=>setShowSettings(true)} style={{ padding:'6px 10px' }}>⚙️</button>
           <div>Score: <b>{score}</b></div>

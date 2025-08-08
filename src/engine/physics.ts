@@ -2,17 +2,24 @@
 export const WORLD = { width: 960, height: 540, groundY: 460 }
 export type Vec = { x:number, y:number }
 
-export function applyPhysics(pos:Vec, vel:Vec, onGround:boolean, cfg:{friction:number, jump:number}){
+export function applyPhysics(
+  pos:Vec,
+  vel:Vec,
+  onGround:boolean,
+  cfg:{friction:number, jump:number},
+  groundYAt?: (x:number)=>number
+){
   const v = { ...vel }
   // gravity
-  v.y += 0.7
+  v.y += 0.6
   // friction
   v.x *= cfg.friction
-  let nx = Math.max(0, Math.min(WORLD.width - 32, (pos.x + v.x)))
+  let nx = pos.x + v.x
   let ny = pos.y + v.y
-  let grounded = onGround
-  if (ny >= WORLD.groundY - 32){
-    ny = WORLD.groundY - 32
+  const ground = groundYAt ? groundYAt(nx) : WORLD.groundY
+  let grounded = false
+  if (ny >= ground - 32){
+    ny = ground - 32
     v.y = 0
     grounded = true
   }

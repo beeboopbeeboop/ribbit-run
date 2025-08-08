@@ -7,20 +7,28 @@ import ciudad from './data/sets/ciudad_ar.json'
 export const WORD_SETS = [frutas, ciudad] as const
 
 export const CHAR_PRESETS = {
-  Ribbie: { speed: 4.2, friction: 0.86, jump: 13, ride: '🛹' },
-  Jinnie: { speed: 4.8, friction: 0.84, jump: 12, ride: '🚗' },
-  Rinnie: { speed: 3.9, friction: 0.88, jump: 14, ride: '🚲' },
-  Chinnie:{ speed: 4.5, friction: 0.86, jump: 15, ride: '🦘' },
+  Ribbie: { speed: 4.2, friction: 0.86, jump: 13, ride: '🛹' },      // skateboard
+  Jinnie: { speed: 4.8, friction: 0.84, jump: 12, ride: '🚲' },      // bike
+  Rinnie: { speed: 3.9, friction: 0.88, jump: 14, ride: '🚗' },      // red car
+  Chinnie:{ speed: 4.5, friction: 0.86, jump: 15, ride: '🚚' },      // truck
 } as const
 
 type Entry = { es:string, en:string, phon:string, wrong:string[] }
 type Fruit = { id:string, x:number, y:number, r:number, kind:string, entry:Entry }
+type Enemy = { id:string, x:number, y:number, r:number, vx:number }
+type Powerup = { id:string, x:number, y:number, r:number, kind:'BBTF'|'LLS' }
 
 function choice<T>(arr:T[]):T{ return arr[Math.floor(Math.random()*arr.length)] }
 function rand(min:number, max:number){ return Math.random()*(max-min)+min }
-function makeFruitFromEntry(entry:Entry):Fruit{
-  return { id: Math.random().toString(36).slice(2), x: rand(40, WORLD.width-40), y: rand(120, WORLD.groundY-80), r: 16, entry, kind: choice(['🍓','🍌','🍍','🍊','🍇','🍉','🍒','🥝']) }
+const ORCHARD_EMOJIS = ['🍓','🍌','🍍','🍊','🍇','🍉','🍒','🥝'] as const
+const CITY_EMOJIS = ['🚕','🚌','🏥','🏦','🏫','🏬','🏠','🚏','🚉','🚦'] as const
+const LEVEL_WIDTH = 10000
+function makeFruitFromEntry(entry:Entry, worldIndex:number=0):Fruit{
+  const pool = worldIndex === 0 ? ORCHARD_EMOJIS : CITY_EMOJIS
+  return { id: Math.random().toString(36).slice(2), x: rand(40, LEVEL_WIDTH-40), y: rand(120, WORLD.groundY-80), r: 16, entry, kind: choice(pool as unknown as string[]) as any }
 }
+function makeEnemy():Enemy{ return { id: Math.random().toString(36).slice(2), x: rand(120, LEVEL_WIDTH-120), y: WORLD.groundY - 40, r: 16, vx: (Math.random()<0.5?-1:1) * (0.6 + Math.random()*0.8) } }
+function makePowerup(kind:Powerup['kind']):Powerup{ return { id: Math.random().toString(36).slice(2), x: rand(120, LEVEL_WIDTH-120), y: WORLD.groundY - 90, r: 16, kind } }
 
 type Quiz = { fruitId:string, entry:Entry, choices:string[], correct:string }
 
@@ -39,9 +47,24 @@ type Store = {
   score: number
   lives: number
   fruits: Fruit[]
+  enemies: Enemy[]
+  powerups: Powerup[]
   quiz: Quiz | null
   flash: string | null
   settings: Settings
+  cameraX: number
+  levelWidth: number
+  boostUntil: number
+  boostFadeUntil: number
+  invulnUntil: number
+  extraJumps: number
+  popup: string | null
+  spinUntil: number
+  correctCount: number
+  levelComplete: boolean
+  dead: boolean
+  flipped: boolean
+  spriteRotation: number
   setFrog: (f:keyof typeof CHAR_PRESETS)=>void
   setWorld: (i:number)=>void
   setKeys: (k:Record<string,boolean>)=>void
@@ -49,6 +72,15 @@ type Store = {
   setVel: (v:{x:number,y:number})=>void
   setOnGround: (g:boolean)=>void
   setFruits: (fn:(f:Fruit[])=>Fruit[])=>void
+  setEnemies: (fn:(e:Enemy[])=>Enemy[])=>void
+  setPowerups: (fn:(p:Powerup[])=>Powerup[])=>void
+  setPopup: (s:string|null)=>void
+  setExtraJumps: (n:number)=>void
+  setBoostUntil: (t:number)=>void
+  setBoostFadeUntil: (t:number)=>void
+  setInvulnUntil: (t:number)=>void
+  setSpinUntil: (t:number)=>void
+  restartLevel: ()=>void
   setQuiz: (q:Quiz|null)=>void
   setFlash: (s:string|null)=>void
   setSettings: (partial:Partial<Settings>)=>void
@@ -82,10 +114,25 @@ export const useGameStore = create<Store>((set, get)=> ({
   keys: {},
   score: persistedProgress.score,
   lives: 3,
-  fruits: WORD_SETS[persistedProgress.world].entries.map(makeFruitFromEntry),
+  fruits: WORD_SETS[persistedProgress.world].entries.map(e => makeFruitFromEntry(e, persistedProgress.world)),
+  enemies: [makeEnemy()],
+  powerups: [makePowerup('BBTF'), makePowerup('LLS')],
   quiz: null,
   flash: null,
   settings: persistedSettings,
+  cameraX: 0,
+  levelWidth: LEVEL_WIDTH,
+  boostUntil: 0,
+  boostFadeUntil: 0,
+  invulnUntil: 0,
+  extraJumps: 0,
+  popup: null,
+  spinUntil: 0,
+  correctCount: 0,
+  levelComplete: false,
+  dead: false,
+  flipped: false,
+  spriteRotation: 0,
   setFrog: (f)=> {
     set({ frog:f });
     get().resetAll();
@@ -113,29 +160,40 @@ export const useGameStore = create<Store>((set, get)=> ({
   setVel: (v)=> set({ vel:v }),
   setOnGround: (g)=> set({ onGround:g }),
   setFruits: (fn)=> set({ fruits: fn(get().fruits) }),
+  setEnemies: (fn)=> set({ enemies: fn(get().enemies) }),
+  setPowerups: (fn)=> set({ powerups: fn(get().powerups) }),
+  setPopup: (s)=> set({ popup:s }),
+  setExtraJumps: (n)=> set({ extraJumps:n }),
+  setBoostUntil: (t)=> set({ boostUntil:t }),
+  setBoostFadeUntil: (t)=> set({ boostFadeUntil:t }),
+  setInvulnUntil: (t)=> set({ invulnUntil:t }),
+  setSpinUntil: (t)=> set({ spinUntil:t }),
+  setSpriteRotation: (deg:number)=> set({ spriteRotation: deg }),
   setQuiz: (q)=> set({ quiz:q }),
   setFlash: (s)=> set({ flash:s }),
   setSettings: (partial)=>{
     const next = { ...get().settings, ...partial }
     const { world } = get()
     // Reload fruit pack for current world (keeps score/lives)
-    set({ settings: next, fruits: WORD_SETS[world].entries.map(makeFruitFromEntry), quiz: null, flash: null })
+    set({ settings: next, fruits: WORD_SETS[world].entries.map(e => makeFruitFromEntry(e, world)), quiz: null, flash: null })
     try{ if(typeof localStorage!=='undefined') localStorage.setItem('ribbit.settings', JSON.stringify(next)) }catch{}
   },
   answer: (choiceText)=>{
-    const { quiz, setQuiz, setFruits, score, lives, setFlash } = get()
+    const { quiz, setQuiz, setFruits, score, lives, setFlash, correctCount } = get()
     if(!quiz) return
     if(choiceText === quiz.correct){
       setFruits(fs => fs.filter(f=> f.id !== quiz.fruitId))
-      set({ score: score + 100 })
+      const nextCorrect = correctCount + 1
+      set({ score: score + 100, correctCount: nextCorrect })
+      if(nextCorrect >= 20){ set({ levelComplete:true, popup:'Level Complete! 🎉' }) }
       setFlash(BOTCHES[Math.floor(Math.random()*BOTCHES.length)])
       setTimeout(()=> setFlash(null), 900)
       setQuiz(null)
     }else{
+      // Wrong answers decrease a life and show feedback, but keep the quiz open
       set({ lives: Math.max(0, lives-1) })
       setFlash('BOTCH-O-RAMA! ❌')
       setTimeout(()=> setFlash(null), 1000)
-      setQuiz(null)
     }
     // Persist progress after answering
     try{
@@ -152,9 +210,14 @@ export const useGameStore = create<Store>((set, get)=> ({
     onGround: true,
     score: 0,
     lives: 3,
-    fruits: WORD_SETS[state.world].entries.map(makeFruitFromEntry),
+    fruits: WORD_SETS[state.world].entries.map(e => makeFruitFromEntry(e, state.world)),
+    enemies: [],
     quiz: null,
-    flash: null
+    flash: null,
+    popup: null,
+    dead: false,
+    flipped: false,
+    spriteRotation: 0
   })),
   resetProgress: ()=>{
     set({ frog:'Ribbie', world:0, theme: WORD_SETS[0].theme })
@@ -165,12 +228,17 @@ export const useGameStore = create<Store>((set, get)=> ({
       }
     }catch{}
   }
+  ,restartLevel: ()=>{
+    set({ cameraX:0, correctCount:0, levelComplete:false, popup:null })
+    get().resetAll()
+  }
 }))
 
 export function collideFruit(){
-  const { pos, fruits, setQuiz } = useGameStore.getState()
+  const { pos, fruits, quiz, setQuiz, popup } = useGameStore.getState()
+  if(quiz || popup) return // already active, do not re-trigger
   const frogX = pos.x + 16, frogY = pos.y + 16
-  const hit = fruits.find(f => dist(f.x, f.y, frogX, frogY) < f.r + 16)
+  const hit = fruits.find(f => dist(f.x, f.y, frogX, frogY) <= f.r + 20)
   if(!hit) return
   const answers = [hit.entry.en, ...hit.entry.wrong]
   for(let i=answers.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [answers[i],answers[j]]=[answers[j],answers[i]] }
