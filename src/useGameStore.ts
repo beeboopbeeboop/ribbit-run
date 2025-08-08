@@ -7,19 +7,23 @@ import ciudad from './data/sets/ciudad_ar.json'
 export const WORD_SETS = [frutas, ciudad] as const
 
 export const CHAR_PRESETS = {
-  Ribbie: { speed: 4.2, friction: 0.86, jump: 13, ride: '🛹' },
-  Jinnie: { speed: 4.8, friction: 0.84, jump: 12, ride: '🚗' },
-  Rinnie: { speed: 3.9, friction: 0.88, jump: 14, ride: '🚲' },
-  Chinnie:{ speed: 4.5, friction: 0.86, jump: 15, ride: '🦘' },
+  Ribbie: { speed: 4.2, friction: 0.86, jump: 13, ride: '🛹' },      // skateboard
+  Jinnie: { speed: 4.8, friction: 0.84, jump: 12, ride: '🚲' },      // bike
+  Rinnie: { speed: 3.9, friction: 0.88, jump: 14, ride: '🚗' },      // red car
+  Chinnie:{ speed: 4.5, friction: 0.86, jump: 15, ride: '🚚' },      // truck
 } as const
 
 type Entry = { es:string, en:string, phon:string, wrong:string[] }
 type Fruit = { id:string, x:number, y:number, r:number, kind:string, entry:Entry }
+type Enemy = { id:string, x:number, y:number, r:number }
 
 function choice<T>(arr:T[]):T{ return arr[Math.floor(Math.random()*arr.length)] }
 function rand(min:number, max:number){ return Math.random()*(max-min)+min }
-function makeFruitFromEntry(entry:Entry):Fruit{
-  return { id: Math.random().toString(36).slice(2), x: rand(40, WORLD.width-40), y: rand(120, WORLD.groundY-80), r: 16, entry, kind: choice(['🍓','🍌','🍍','🍊','🍇','🍉','🍒','🥝']) }
+const ORCHARD_EMOJIS = ['🍓','🍌','🍍','🍊','🍇','🍉','🍒','🥝'] as const
+const CITY_EMOJIS = ['🚕','🚌','🏥','🏦','🏫','🏬','🏠','🚏','🚉','🚦'] as const
+function makeFruitFromEntry(entry:Entry, worldIndex:number=0):Fruit{
+  const pool = worldIndex === 0 ? ORCHARD_EMOJIS : CITY_EMOJIS
+  return { id: Math.random().toString(36).slice(2), x: rand(40, WORLD.width-40), y: rand(120, WORLD.groundY-80), r: 16, entry, kind: choice(pool as unknown as string[]) as any }
 }
 
 type Quiz = { fruitId:string, entry:Entry, choices:string[], correct:string }
@@ -39,6 +43,7 @@ type Store = {
   score: number
   lives: number
   fruits: Fruit[]
+  enemies: Enemy[]
   quiz: Quiz | null
   flash: string | null
   settings: Settings
@@ -49,6 +54,7 @@ type Store = {
   setVel: (v:{x:number,y:number})=>void
   setOnGround: (g:boolean)=>void
   setFruits: (fn:(f:Fruit[])=>Fruit[])=>void
+  setEnemies: (fn:(e:Enemy[])=>Enemy[])=>void
   setQuiz: (q:Quiz|null)=>void
   setFlash: (s:string|null)=>void
   setSettings: (partial:Partial<Settings>)=>void
@@ -82,7 +88,8 @@ export const useGameStore = create<Store>((set, get)=> ({
   keys: {},
   score: persistedProgress.score,
   lives: 3,
-  fruits: WORD_SETS[persistedProgress.world].entries.map(makeFruitFromEntry),
+  fruits: WORD_SETS[persistedProgress.world].entries.map(e => makeFruitFromEntry(e, persistedProgress.world)),
+  enemies: [],
   quiz: null,
   flash: null,
   settings: persistedSettings,
@@ -113,13 +120,14 @@ export const useGameStore = create<Store>((set, get)=> ({
   setVel: (v)=> set({ vel:v }),
   setOnGround: (g)=> set({ onGround:g }),
   setFruits: (fn)=> set({ fruits: fn(get().fruits) }),
+  setEnemies: (fn)=> set({ enemies: fn(get().enemies) }),
   setQuiz: (q)=> set({ quiz:q }),
   setFlash: (s)=> set({ flash:s }),
   setSettings: (partial)=>{
     const next = { ...get().settings, ...partial }
     const { world } = get()
     // Reload fruit pack for current world (keeps score/lives)
-    set({ settings: next, fruits: WORD_SETS[world].entries.map(makeFruitFromEntry), quiz: null, flash: null })
+    set({ settings: next, fruits: WORD_SETS[world].entries.map(e => makeFruitFromEntry(e, world)), quiz: null, flash: null })
     try{ if(typeof localStorage!=='undefined') localStorage.setItem('ribbit.settings', JSON.stringify(next)) }catch{}
   },
   answer: (choiceText)=>{
@@ -152,7 +160,8 @@ export const useGameStore = create<Store>((set, get)=> ({
     onGround: true,
     score: 0,
     lives: 3,
-    fruits: WORD_SETS[state.world].entries.map(makeFruitFromEntry),
+    fruits: WORD_SETS[state.world].entries.map(e => makeFruitFromEntry(e, state.world)),
+    enemies: [],
     quiz: null,
     flash: null
   })),
@@ -170,7 +179,7 @@ export const useGameStore = create<Store>((set, get)=> ({
 export function collideFruit(){
   const { pos, fruits, setQuiz } = useGameStore.getState()
   const frogX = pos.x + 16, frogY = pos.y + 16
-  const hit = fruits.find(f => dist(f.x, f.y, frogX, frogY) < f.r + 16)
+  const hit = fruits.find(f => dist(f.x, f.y, frogX, frogY) <= f.r + 20)
   if(!hit) return
   const answers = [hit.entry.en, ...hit.entry.wrong]
   for(let i=answers.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [answers[i],answers[j]]=[answers[j],answers[i]] }

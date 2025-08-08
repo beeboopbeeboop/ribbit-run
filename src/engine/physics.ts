@@ -10,7 +10,7 @@ export function applyPhysics(pos:Vec, vel:Vec, onGround:boolean, cfg:{friction:n
   v.x *= cfg.friction
   let nx = Math.max(0, Math.min(WORLD.width - 32, (pos.x + v.x)))
   let ny = pos.y + v.y
-  let grounded = onGround
+  let grounded = false
   if (ny >= WORLD.groundY - 32){
     ny = WORLD.groundY - 32
     v.y = 0

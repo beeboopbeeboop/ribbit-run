@@ -27,6 +27,8 @@ export default function Game(){
     const loop = ()=>{
       if(!quiz){
         const v = { ...vel }
+        // auto-scroll to the right for side-scroller feel
+        v.x += 0.25 * cfg.speed
         if(keys['ArrowLeft']) v.x -= 0.6 * cfg.speed
         if(keys['ArrowRight']) v.x += 0.6 * cfg.speed
         if((keys[' '] || keys['Spacebar']) && onGround){ v.y = -cfg.jump; useGameStore.setState({ onGround:false }) }
