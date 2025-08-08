@@ -1,5 +1,5 @@
 
-# Ribbit Run: Español (MVP Starter)
+# Ribbit Run: Español
 
 Cute 2D vocab-runner prototype. Collect fruit → Spanish word pops → pick the right English translation → hype popup (**BOTCH-TASTIC!**, etc.).
 
@@ -13,10 +13,31 @@ npm run dev
 ## Controls
 - ← → move
 - Space to jump
+- Quiz: ↑/↓ to select, Enter to confirm
 
-## Notes
-- Two vocab sets live in `src/data/sets`. Add phonetics in brackets `[ ... ]` for each word.
-- TTS stub in `src/audio/tts.ts` (es-AR).
+## Settings
+- Gear icon opens Settings
+- Toggle: Use Argentine variants (AR)
+- Reset progress button
+
+## Persistence
+- Saves character, world, and total score in `localStorage` as `ribbit.progress`
+- Saves settings in `localStorage` as `ribbit.settings`
+
+## Dev
+```bash
+npm install
+npm run dev
+npm run build
+npm test
+```
+
+## Deploy
+- Root directory is the repo root
+- CI runs build and tests
+
+## Badges
+[![CI](https://github.com/beeboopbeeboop/ribbit-run/actions/workflows/ci.yml/badge.svg)](https://github.com/beeboopbeeboop/ribbit-run/actions/workflows/ci.yml)
 
 ## Next steps (Sprint 2 ideas)
 - Tilemap collisions + slopes

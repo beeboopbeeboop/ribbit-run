@@ -24,6 +24,10 @@ function makeFruitFromEntry(entry:Entry):Fruit{
 
 type Quiz = { fruitId:string, entry:Entry, choices:string[], correct:string }
 
+type Settings = {
+  useAr: boolean
+}
+
 type Store = {
   frog: keyof typeof CHAR_PRESETS
   world: number
@@ -37,6 +41,7 @@ type Store = {
   fruits: Fruit[]
   quiz: Quiz | null
   flash: string | null
+  settings: Settings
   setFrog: (f:keyof typeof CHAR_PRESETS)=>void
   setWorld: (i:number)=>void
   setKeys: (k:Record<string,boolean>)=>void
@@ -46,27 +51,63 @@ type Store = {
   setFruits: (fn:(f:Fruit[])=>Fruit[])=>void
   setQuiz: (q:Quiz|null)=>void
   setFlash: (s:string|null)=>void
+  setSettings: (partial:Partial<Settings>)=>void
   answer: (choice:string)=>void
   resetAll: ()=>void
+  resetProgress: ()=>void
 }
 
 const BOTCHES = ['BOTCH-TASTIC! ✅','BOTCH-A-LICIOUS! ✅','BOTCH-ALOOZA! ✅','BOTCH-BONANZA! ✅','BOTCH-BRAVÍSIMO! ✅']
 
+function safeLoad<T>(key:string, fallback:T):T{
+  try{
+    const raw = typeof localStorage!=='undefined' ? localStorage.getItem(key) : null
+    return raw ? JSON.parse(raw) as T : fallback
+  }catch{ return fallback }
+}
+
+type PersistedProgress = { frog:keyof typeof CHAR_PRESETS, world:number, score:number }
+type PersistedSettings = Settings
+
+const persistedSettings = safeLoad<PersistedSettings>('ribbit.settings', { useAr: true })
+const persistedProgress = safeLoad<PersistedProgress>('ribbit.progress', { frog:'Ribbie', world:0, score:0 })
+
 export const useGameStore = create<Store>((set, get)=> ({
-  frog: 'Ribbie',
-  world: 0,
-  theme: WORD_SETS[0].theme,
+  frog: persistedProgress.frog,
+  world: persistedProgress.world,
+  theme: WORD_SETS[persistedProgress.world].theme,
   pos: { x:120, y: WORLD.groundY - 32 },
   vel: { x:0, y:0 },
   onGround: true,
   keys: {},
-  score: 0,
+  score: persistedProgress.score,
   lives: 3,
-  fruits: WORD_SETS[0].entries.map(makeFruitFromEntry),
+  fruits: WORD_SETS[persistedProgress.world].entries.map(makeFruitFromEntry),
   quiz: null,
   flash: null,
-  setFrog: (f)=> { set({ frog:f }); get().resetAll() },
-  setWorld: (i)=> { set({ world:i, theme: WORD_SETS[i].theme }); get().resetAll() },
+  settings: persistedSettings,
+  setFrog: (f)=> {
+    set({ frog:f });
+    get().resetAll();
+    try{
+      if(typeof localStorage!=='undefined'){
+        const { world, score } = get()
+        const payload:PersistedProgress = { frog:f, world, score }
+        localStorage.setItem('ribbit.progress', JSON.stringify(payload))
+      }
+    }catch{}
+  },
+  setWorld: (i)=> {
+    set({ world:i, theme: WORD_SETS[i].theme });
+    get().resetAll();
+    try{
+      if(typeof localStorage!=='undefined'){
+        const { frog, score } = get()
+        const payload:PersistedProgress = { frog, world:i, score }
+        localStorage.setItem('ribbit.progress', JSON.stringify(payload))
+      }
+    }catch{}
+  },
   setKeys: (k)=> set({ keys:k }),
   setPos: (p)=> set({ pos:p }),
   setVel: (v)=> set({ vel:v }),
@@ -74,6 +115,13 @@ export const useGameStore = create<Store>((set, get)=> ({
   setFruits: (fn)=> set({ fruits: fn(get().fruits) }),
   setQuiz: (q)=> set({ quiz:q }),
   setFlash: (s)=> set({ flash:s }),
+  setSettings: (partial)=>{
+    const next = { ...get().settings, ...partial }
+    const { world } = get()
+    // Reload fruit pack for current world (keeps score/lives)
+    set({ settings: next, fruits: WORD_SETS[world].entries.map(makeFruitFromEntry), quiz: null, flash: null })
+    try{ if(typeof localStorage!=='undefined') localStorage.setItem('ribbit.settings', JSON.stringify(next)) }catch{}
+  },
   answer: (choiceText)=>{
     const { quiz, setQuiz, setFruits, score, lives, setFlash } = get()
     if(!quiz) return
@@ -89,6 +137,14 @@ export const useGameStore = create<Store>((set, get)=> ({
       setTimeout(()=> setFlash(null), 1000)
       setQuiz(null)
     }
+    // Persist progress after answering
+    try{
+      if(typeof localStorage!=='undefined'){
+        const { frog, world, score:nextScore } = get()
+        const payload:PersistedProgress = { frog, world, score: nextScore }
+        localStorage.setItem('ribbit.progress', JSON.stringify(payload))
+      }
+    }catch{}
   },
   resetAll: ()=> set((state)=> ({
     pos: { x:120, y: WORLD.groundY - 32 },
@@ -99,7 +155,16 @@ export const useGameStore = create<Store>((set, get)=> ({
     fruits: WORD_SETS[state.world].entries.map(makeFruitFromEntry),
     quiz: null,
     flash: null
-  }))
+  })),
+  resetProgress: ()=>{
+    set({ frog:'Ribbie', world:0, theme: WORD_SETS[0].theme })
+    get().resetAll()
+    try{
+      if(typeof localStorage!=='undefined'){
+        localStorage.removeItem('ribbit.progress')
+      }
+    }catch{}
+  }
 }))
 
 export function collideFruit(){
