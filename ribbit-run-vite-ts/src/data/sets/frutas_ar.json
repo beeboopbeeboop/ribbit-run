@@ -1,0 +1,41 @@
+{
+  "theme": "Frutas & Básicos (AR)",
+  "entries": [
+    {
+      "es": "frutilla",
+      "en": "strawberry",
+      "phon": "[fro-TEE-sha]",
+      "wrong": [
+        "raspberry",
+        "cherry"
+      ]
+    },
+    {
+      "es": "ananá",
+      "en": "pineapple",
+      "phon": "[ah-nah-NAH]",
+      "wrong": [
+        "mango",
+        "papaya"
+      ]
+    },
+    {
+      "es": "durazno",
+      "en": "peach",
+      "phon": "[doo-RAHZ-no]",
+      "wrong": [
+        "apricot",
+        "pear"
+      ]
+    },
+    {
+      "es": "mora",
+      "en": "blackberry",
+      "phon": "[MOH-rah]",
+      "wrong": [
+        "blueberry",
+        "mulberry"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "theme": "Ciudad & Movimiento (AR)",
+  "entries": [
+    {
+      "es": "vereda",
+      "en": "sidewalk",
+      "phon": "[veh-REH-dah]",
+      "wrong": [
+        "crosswalk",
+        "curb"
+      ]
+    },
+    {
+      "es": "doblar",
+      "en": "to turn",
+      "phon": "[doh-BLAR]",
+      "wrong": [
+        "to fold",
+        "to stop"
+      ]
+    },
+    {
+      "es": "frenar",
+      "en": "to brake",
+      "phon": "[freh-NAR]",
+      "wrong": [
+        "to break",
+        "to start"
+      ]
+    }
+  ]
+}
