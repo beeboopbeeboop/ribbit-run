@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/game.tsx","./src/main.tsx","./src/usegamestore.ts","./src/__tests__/utils.test.ts","./src/audio/tts.ts","./src/engine/physics.ts","./src/ui/hud.tsx","./src/ui/quiz.tsx"],"version":"5.9.2"}
