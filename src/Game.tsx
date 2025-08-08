@@ -8,7 +8,7 @@ import { OrchardBg, CityBg } from './assets/backgrounds'
 import { RibbieSvg, JinnieSvg, RinnieSvg, ChinnieSvg } from './assets/characters'
 
 export default function Game(){
-  const { frog, pos, vel, onGround, keys, setPos, setVel, setOnGround, quiz, flash, setKeys } = useGameStore()
+  const { frog, pos, vel, onGround, keys, setPos, setVel, setOnGround, quiz, flash, setKeys, world } = useGameStore()
   const cfg = CHAR_PRESETS[frog]
 
   // input listeners
@@ -24,13 +24,20 @@ export default function Game(){
   // game loop
   useEffect(()=>{
     let raf = 0
+    const groundYAt = (x:number)=>{
+      // simple rolling sine-based ground; different per world
+      const base = WORLD.groundY
+      const amp = world===0 ? 14 : 10
+      const freq = world===0 ? 0.008 : 0.012
+      return base - Math.sin((x+200)*freq) * amp
+    }
     const loop = ()=>{
       if(!quiz){
         const v = { ...vel }
         if(keys['ArrowLeft']) v.x -= 0.6 * cfg.speed
         if(keys['ArrowRight']) v.x += 0.6 * cfg.speed
         if((keys[' '] || keys['Spacebar']) && onGround){ v.y = -cfg.jump; useGameStore.setState({ onGround:false }) }
-        const next = applyPhysics(pos, v, onGround, { friction: cfg.friction, jump: cfg.jump })
+        const next = applyPhysics(pos, v, onGround, { friction: cfg.friction, jump: cfg.jump }, groundYAt)
         setPos(next.pos); setVel(next.vel); setOnGround(next.onGround)
         collideFruit()
       }

@@ -25,7 +25,8 @@ export function OrchardBg(){
           </g>
         )
       })}
-      <rect x="0" y={h-80} width={w} height="80" fill="#78c46c"/>
+      {/* rolling hills */}
+      <path d={`M0 ${h-80} C ${w*0.25} ${h-120}, ${w*0.5} ${h-60}, ${w*0.75} ${h-100} S ${w} ${h-60}, ${w} ${h-60} L ${w} ${h} L 0 ${h} Z`} fill="#78c46c" />
       <rect x="0" y={h-96} width={w} height="16" fill="#4f8d46"/>
     </svg>
   )
@@ -55,7 +56,7 @@ export function CityBg(){
           </g>
         )
       })}
-      <rect x="0" y={h-80} width={w} height="80" fill="#94a3b8"/>
+      <path d={`M0 ${h-70} C ${w*0.3} ${h-90}, ${w*0.6} ${h-70}, ${w} ${h-90} L ${w} ${h} L 0 ${h} Z`} fill="#94a3b8" />
       <rect x="0" y={h-96} width={w} height="16" fill="#475569"/>
     </svg>
   )
